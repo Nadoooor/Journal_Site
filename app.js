@@ -1,4 +1,4 @@
-const API_URL='https://journaling.nadersayed742.workers.dev/';
+const API_URL='https://journaling.nadersayed742.workers.dev';
 const USERS=['Nadoooor','ZIZO932']; let password='haha'; let entries=[]; let currentMd='';
 const $=id=>document.getElementById(id); const today=()=>{const d=new Date();return `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`};
 function parse(md){const out=[];const re=/^## Day (\d+) \[!\[@([^\]]+)\][^\n]*\n\n- \*\*Date:\*\* ?(.*?)\n- \*\*Total hours spent:\*\* ?(.*?)\n\n### Entry:\n\n([\s\S]*?)\n\n### Recording links:\s*\n([\s\S]*?)(?=\n(?:------------------------------\n\n)?## Day |$)/gm;let m;while((m=re.exec(md))){out.push({day:+m[1],github:m[2],date:m[3].trim(),hours:m[4].trim(),body:m[5].trim(),links:m[6].split('\n').map(x=>x.replace(/^[-*]\s+/,'').trim()).filter(x=>x.startsWith('http'))})}return out}

@@ -26,6 +26,21 @@ Set these plain Worker variables:
 - `GITHUB_REPO`: the repository name
 - `JOURNAL_PATH`: exact path and casing, normally `JOURNAL.md`
 
+These must be set in the deployed Worker dashboard. The placeholder values in
+`worker/wrangler.toml` are only a template and will not identify your repo.
+For example, if the file URL is
+`https://github.com/my-org/my-repo/blob/main/JOURNAL.md`, use:
+
+- `GITHUB_OWNER`: `my-org`
+- `GITHUB_REPO`: `my-repo`
+- `JOURNAL_PATH`: `JOURNAL.md`
+
+A GitHub `404` from `/api/journal` means GitHub cannot see that exact
+`owner/repository/path` combination. Verify the file exists on the branch used
+by the repository, check uppercase/lowercase spelling, and confirm the token's
+repository access and Contents read permission. After changing dashboard
+variables, deploy the Worker again.
+
 Add these as Worker secrets. Never commit their values:
 
 - `JOURNAL_PASSWORD`: the shared login password

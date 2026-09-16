@@ -1,4 +1,5 @@
 const API_URL = 'https://journaling.nadersayed742.workers.dev';
+const REPOSITORY_RAW_BASE = 'https://raw.githubusercontent.com/WALL-Es/WALL-E/main/';
 const USERS = ['Nadoooor', 'ZIZO932'];
 const TOKEN_KEY = 'walle-journal-session';
 
@@ -28,7 +29,12 @@ function renderMarkdown(markdown) {
   html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
   html = html.replace(/^[-*] (.+)$/gm, '<li>$1</li>');
   html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
-  html = html.replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, '<img alt="$1" src="$2">');
+  html = html.replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, (match, alt, source) => {
+    const relativeSource = source.replace(/^\.?\//, '');
+    const encodedSource = relativeSource.split('/').map(encodeURIComponent).join('/');
+    const imageSource = source.startsWith('http') ? source : `${REPOSITORY_RAW_BASE}${encodedSource}`;
+    return `<img alt="${alt}" src="${imageSource}">`;
+  });
   html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
   html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
   html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
@@ -119,7 +125,7 @@ async function api(endpoint, options = {}) {
   headers.set('Content-Type', 'application/json');
   if (getToken()) headers.set('Authorization', `Bearer ${getToken()}`);
 
-  const response = await fetch(`${API_URL}${endpoint}`, { ...options, headers });
+  const response = await fetch(`${API_URL}${endpoint}`, { ...options, headers, cache: 'no-store' });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(data.error || `Request failed (${response.status})`);
   return data;
@@ -269,11 +275,18 @@ $('download').addEventListener('click', () => {
 });
 ['writer', 'day', 'date', 'hours', 'body', 'links'].forEach(id => $(id).addEventListener('input', render));
 
-if (getToken()) {
+async function initialize() {
+  if (!getToken()) {
+    $('login').classList.remove('hidden');
+    return;
+  }
+
   $('login').classList.add('hidden');
   $('app').classList.remove('hidden');
   $('logout').classList.remove('hidden');
-  loadJournal().catch(logout);
-} else {
-  $('login').classList.remove('hidden');
+  await loadJournal();
 }
+
+window.addEventListener('DOMContentLoaded', () => {
+  initialize().catch(logout);
+});

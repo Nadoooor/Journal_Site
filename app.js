@@ -3,6 +3,7 @@ const USERS = ['Nadoooor', 'ZIZO932'];
 let password = '';
 let entries = [];
 let currentMd = '';
+let isRenderedView = false;
 
 const $ = id => document.getElementById(id);
 const today = () => {
@@ -10,21 +11,43 @@ const today = () => {
   return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
 };
 
+// Simple Markdown to HTML parser for rendered preview
+function mdToHtml(md) {
+  return md
+    .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+    .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+    .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+    .replace(/\*\*(.* vast?)\*\*/gim, '<b>$1</b>')
+    .replace(/\*(.* vast?)\*/gim, '<i>$1</i>')
+    .replace(/!\[([^\]]+)\]\(([^)]+)\)/gim, '<img alt="$1" src="$2" style="max-width:100%; border-radius:8px; margin:10px 0;" />')
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/gim, '<a href="$2" target="_blank" style="color:#60a5fa">$1</a>')
+    .replace(/\n/gim, '<br>');
+}
+
 function parse(md) {
   if (!md) return [];
   const out = [];
-  const re = /^## Day (\d+) \[!\[@([^\]]+)\][^\n]*\n\n- \*\*Date:\*\* ?(.*?)\n- \*\*Total hours spent:\*\* ?(.*?)\n\n### Entry:\n\n([\s\S]*?)\n\n### Recording links:\s*\n([\s\S]*?)(?=\n(?:------------------------------\n\n)?## Day |$)/gm;
+
+  // Robust Regex to handle badge links, empty dates, empty entries, and varying separators
+  const re = /^## Day (\d+)\s+\[!\[@([^\]]+)\][^\n]*\n\n-\s+\*\*Date:\*\*\s*(.*?)\n-\s+\*\*Total hours spent:\*\*\s*(.*?)\n\n### Entry:\s*\n([\s\S]*?)\n\n### Recording links:\s*\n([\s\S]*?)(?=\n(?:---+|---+|\s*)\n\n## Day |$)/gm;
+
   let m;
   while ((m = re.exec(md))) {
+    const rawLinks = m[6].trim();
+    const links = rawLinks
+      ? rawLinks.split('\n').map(x => x.replace(/^[-*]\s+/, '').trim()).filter(x => x.startsWith('http'))
+      : [];
+
     out.push({
-      day: +m[1],
-      github: m[2],
+      day: parseInt(m[1], 10),
+      github: m[2].trim(),
       date: m[3].trim(),
       hours: m[4].trim(),
       body: m[5].trim(),
-      links: m[6].split('\n').map(x => x.replace(/^[-*]\s+/, '').trim()).filter(x => x.startsWith('http'))
+      links: links
     });
   }
+
   return out;
 }
 
@@ -61,17 +84,27 @@ function select(e) {
 
 function render() {
   const seq = $('sequence');
-  if (!seq) return;
-  seq.innerHTML = '';
-  ordered().forEach(e => {
-    const d = document.createElement('div');
-    d.className = 'slot';
-    if (+$('day').value === e.day && $('writer').value === e.github) d.classList.add('active');
-    d.innerHTML = `<b>@${e.github} — Day ${e.day}</b><small class="${e.body ? 'done' : ''}">${e.body ? '✓ completed' : 'empty'}</small>`;
-    d.onclick = () => select(e);
-    seq.appendChild(d);
-  });
-  if ($('preview')) $('preview').textContent = currentMd;
+  if (seq) {
+    seq.innerHTML = '';
+    ordered().forEach(e => {
+      const d = document.createElement('div');
+      d.className = 'slot';
+      if (+$('day').value === e.day && $('writer').value === e.github) d.classList.add('active');
+      d.innerHTML = `<b>@${e.github} — Day ${e.day}</b><small class="${e.body ? 'done' : ''}">${e.body ? '✓ completed' : 'empty'}</small>`;
+      d.onclick = () => select(e);
+      seq.appendChild(d);
+    });
+  }
+
+  if (isRenderedView) {
+    $('preview').classList.add('hidden');
+    $('renderedPreview').classList.remove('hidden');
+    $('renderedPreview').innerHTML = mdToHtml(currentMd);
+  } else {
+    $('renderedPreview').classList.add('hidden');
+    $('preview').classList.remove('hidden');
+    $('preview').textContent = currentMd;
+  }
 }
 
 async function api(endpoint, opts = {}) {
@@ -89,7 +122,6 @@ async function api(endpoint, opts = {}) {
 }
 
 async function refresh() {
-  // Fixed endpoint from '/' to '/api/journal'
   const data = await api('/api/journal');
   currentMd = data.content || '';
   entries = parse(currentMd);
@@ -98,6 +130,65 @@ async function refresh() {
   render();
   if ($('sync')) $('sync').textContent = '🟢 Synced with GitHub';
 }
+
+// Button Listeners
+$('fetchJournal').onclick = async () => {
+  try {
+    $('msg').textContent = 'Fetching file content...';
+    await refresh();
+    $('msg').className = 'ok';
+    $('msg').textContent = 'File content fetched successfully.';
+  } catch (e) {
+    $('msg').className = 'err';
+    $('msg').textContent = e.message;
+  }
+};
+
+$('toggleView').onclick = () => {
+  isRenderedView = !isRenderedView;
+  $('toggleView').textContent = isRenderedView ? 'Show Raw Code' : 'Toggle Rendered Preview';
+  render();
+};
+
+$('uploadImage').onclick = async () => {
+  const fileInput = $('imageInput');
+  if (!fileInput.files.length) {
+    $('msg').className = 'err';
+    $('msg').textContent = 'Please select an image file first.';
+    return;
+  }
+
+  const file = fileInput.files[0];
+  const reader = new FileReader();
+
+  reader.onload = async () => {
+    const base64Data = reader.result.split(',')[1];
+    const fileName = `${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
+
+    try {
+      $('msg').textContent = 'Uploading image to Images/Journal...';
+      const res = await api('/api/upload-image', {
+        method: 'POST',
+        body: JSON.stringify({
+          filename: fileName,
+          content: base64Data
+        })
+      });
+
+      // Insert markdown tag into textarea
+      const imageTag = `\n![Image](Images/Journal/${fileName})\n`;
+      $('body').value += imageTag;
+      $('msg').className = 'ok';
+      $('msg').textContent = 'Image uploaded and inserted into entry!';
+      render();
+    } catch (e) {
+      $('msg').className = 'err';
+      $('msg').textContent = e.message;
+    }
+  };
+
+  reader.readAsDataURL(file);
+};
 
 $('loginBtn').onclick = async () => {
   password = $('password').value;
@@ -115,16 +206,7 @@ $('loginBtn').onclick = async () => {
   }
 };
 
-$('refresh').onclick = async () => {
-  try {
-    await refresh();
-    $('msg').className = 'ok';
-    $('msg').textContent = 'Refreshed from GitHub.';
-  } catch (e) {
-    $('msg').className = 'err';
-    $('msg').textContent = e.message;
-  }
-};
+$('refresh').onclick = refresh;
 
 $('save').onclick = async () => {
   const entry = {
@@ -143,7 +225,6 @@ $('save').onclick = async () => {
   try {
     $('save').disabled = true;
     $('msg').textContent = 'Saving…';
-    // Fixed endpoint from '/' to '/api/journal'
     const data = await api('/api/journal', {
       method: 'POST',
       body: JSON.stringify(entry)
@@ -170,7 +251,7 @@ $('copy').onclick = async () => {
 $('download').onclick = () => {
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([currentMd], { type: 'text/markdown' }));
-  a.download = 'Journal.md';
+  a.download = 'JOURNAL.md';
   a.click();
 };
 

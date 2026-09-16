@@ -1,17 +1,76 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>WALL-E Journal</title><link rel="stylesheet" href="style.css"></head>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>WALL-E Journal</title>
+  <link rel="stylesheet" href="style.css">
+</head>
 <body>
 <div class="wrap">
-<header><div><h1>WALL-E Journal</h1><p>Shared journal · GitHub synced</p></div><div id="sync" class="pill">Not connected</div></header>
-<section id="login" class="card login"><h2>Shared journal</h2><p>Enter the shared password to read and update the journal.</p><input id="password" type="password" placeholder="Password"><button id="loginBtn">Unlock</button><div id="loginMsg"></div></section>
-<section id="app" class="hidden">
-<div class="layout">
-<aside class="card"><h2>Journal order</h2><div id="sequence"></div></aside>
-<main class="card">
-<div class="row"><label>Writer<select id="writer"><option value="Nadoooor">@Nadoooor</option><option value="ZIZO932">@ZIZO932</option></select></label><label>Day<input id="day" type="number" min="1"></label><label>Date<input id="date" placeholder="16/9/2026"></label><label>Hours<input id="hours" placeholder="2.5 hours"></label></div>
-<label>Entry<textarea id="body" placeholder="What did you work on today?"></textarea></label>
-<label>Recording links<textarea id="links" class="small" placeholder="One URL per line"></textarea></label>
-<div class="buttons"><button id="save">Save to GitHub</button><button class="secondary" id="refresh">Refresh</button><button class="secondary" id="copy">Copy full Markdown</button><button class="secondary" id="download">Download</button></div>
-<p id="msg"></p><h3>Markdown preview</h3><pre id="preview"></pre>
-</main></div></section>
-</div><script src="app.js"></script></body></html>
+  <header>
+    <div><h1>WALL-E Journal</h1><p>Shared journal · GitHub synced</p></div>
+    <div id="sync" class="pill">Not connected</div>
+  </header>
+
+  <section id="login" class="card login">
+    <h2>Shared journal</h2>
+    <p>Enter the shared password to read and update the journal.</p>
+    <input id="password" type="password" placeholder="Password">
+    <button id="loginBtn">Unlock</button>
+    <div id="loginMsg"></div>
+  </section>
+
+  <section id="app" class="hidden">
+    <div class="layout">
+      <aside class="card">
+        <h2>Journal order</h2>
+        <button class="secondary" id="fetchJournal" style="width:100%; margin-bottom: 12px;">Fetch Content</button>
+        <div id="sequence"></div>
+      </aside>
+      
+      <main class="card">
+        <div class="row">
+          <label>Writer
+            <select id="writer">
+              <option value="Nadoooor">@Nadoooor</option>
+              <option value="ZIZO932">@ZIZO932</option>
+            </select>
+          </label>
+          <label>Day<input id="day" type="number" min="1"></label>
+          <label>Date<input id="date" placeholder="16/9/2026"></label>
+          <label>Hours<input id="hours" placeholder="2.5 hours"></label>
+        </div>
+
+        <label>Entry<textarea id="body" placeholder="What did you work on today?"></textarea></label>
+        
+        <!-- Image Upload Controls -->
+        <div style="margin: 10px 0; display:flex; gap:10px; align-items:center;">
+          <input type="file" id="imageInput" accept="image/*" style="width:auto; margin:0;">
+          <button id="uploadImage" class="secondary">Upload Image to Repo</button>
+        </div>
+
+        <label>Recording links<textarea id="links" class="small" placeholder="One URL per line"></textarea></label>
+
+        <div class="buttons">
+          <button id="save">Save to GitHub</button>
+          <button class="secondary" id="refresh">Refresh</button>
+          <button class="secondary" id="toggleView">Toggle Rendered Preview</button>
+          <button class="secondary" id="copy">Copy full Markdown</button>
+          <button class="secondary" id="download">Download</button>
+        </div>
+        
+        <p id="msg"></p>
+
+        <h3>Markdown View</h3>
+        <!-- Raw Code View -->
+        <pre id="preview"></pre>
+        <!-- Rendered HTML View -->
+        <div id="renderedPreview" class="card hidden" style="background:#080e18;"></div>
+      </main>
+    </div>
+  </section>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

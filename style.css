@@ -33,6 +33,12 @@ header {
   margin-bottom: 18px;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 h1 {
   margin: 0;
   font-size: 28px;
@@ -70,6 +76,16 @@ p {
   display: none !important;
 }
 
+.full-width {
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.small-button {
+  padding: 7px 10px;
+  font-size: 12px;
+}
+
 .layout {
   display: grid;
   grid-template-columns: 280px 1fr;
@@ -105,6 +121,11 @@ input, select {
   border-radius: 9px;
 }
 
+input[type="file"] {
+  padding: 7px;
+  border-radius: 9px;
+}
+
 textarea {
   height: 250px;
   resize: vertical;
@@ -114,6 +135,13 @@ textarea {
 
 textarea.small {
   height: 90px;
+}
+
+.upload-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0;
 }
 
 .buttons {
@@ -187,6 +215,20 @@ pre, #renderedPreview {
   line-height: 1.6;
 }
 
+#renderedPreview h1,
+#renderedPreview h2,
+#renderedPreview h3 {
+  margin-top: 1.2em;
+}
+
+#renderedPreview a {
+  color: #93c5fd;
+}
+
+#renderedPreview ul {
+  padding-left: 22px;
+}
+
 #renderedPreview img {
   max-width: 100%;
   height: auto;
@@ -218,6 +260,13 @@ pre, #renderedPreview {
   header {
     align-items: flex-start;
     gap: 10px;
+    flex-direction: column;
+  }
+  .header-actions {
+    width: 100%;
+  }
+  .upload-row {
+    align-items: stretch;
     flex-direction: column;
   }
 }

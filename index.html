@@ -10,7 +10,10 @@
 <div class="wrap">
   <header>
     <div><h1>WALL-E Journal</h1><p>Shared journal · GitHub synced</p></div>
-    <div id="sync" class="pill">Not connected</div>
+    <div class="header-actions">
+      <div id="sync" class="pill">Not connected</div>
+      <button class="secondary small-button hidden" id="logout">Lock</button>
+    </div>
   </header>
 
   <section id="login" class="card login">
@@ -25,7 +28,7 @@
     <div class="layout">
       <aside class="card">
         <h2>Journal order</h2>
-        <button class="secondary" id="fetchJournal" style="width:100%; margin-bottom: 12px;">Fetch Content</button>
+        <button class="secondary full-width" id="fetchJournal">Fetch Content</button>
         <div id="sequence"></div>
       </aside>
       
@@ -45,8 +48,8 @@
         <label>Entry<textarea id="body" placeholder="What did you work on today?"></textarea></label>
         
         <!-- Image Upload Controls -->
-        <div style="margin: 10px 0; display:flex; gap:10px; align-items:center;">
-          <input type="file" id="imageInput" accept="image/*" style="width:auto; margin:0;">
+        <div class="upload-row">
+          <input type="file" id="imageInput" accept="image/*">
           <button id="uploadImage" class="secondary">Upload Image to Repo</button>
         </div>
 
@@ -66,7 +69,7 @@
         <!-- Raw Code View -->
         <pre id="preview"></pre>
         <!-- Rendered HTML View -->
-        <div id="renderedPreview" class="card hidden" style="background:#080e18;"></div>
+        <div id="renderedPreview" class="hidden"></div>
       </main>
     </div>
   </section>

@@ -4,72 +4,111 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>WALL-E Journal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <div><h1>WALL-E Journal</h1><p>Shared journal · GitHub synced</p></div>
+<div class="app-frame">
+  <header class="topbar">
+    <div class="brand-lockup">
+      <div class="brand-mark" aria-hidden="true">W</div>
+      <div><p class="eyebrow">WALL-E / FIELD NOTES</p><h1>Journal workspace</h1></div>
+    </div>
     <div class="header-actions">
-      <div id="sync" class="pill">Not connected</div>
-      <button class="secondary small-button hidden" id="logout">Lock</button>
+      <div id="sync" class="pill"><span class="status-dot"></span>Not connected</div>
+      <button class="secondary small-button hidden" id="logout">Lock workspace</button>
     </div>
   </header>
 
-  <section id="login" class="card login">
-    <h2>Shared journal</h2>
-    <p>Enter the shared password to read and update the journal.</p>
-    <input id="password" type="password" placeholder="Password">
-    <button id="loginBtn">Unlock</button>
-    <div id="loginMsg"></div>
+  <section id="login" class="login-screen">
+    <div class="login-art" aria-hidden="true"><span>W</span></div>
+    <div class="login-card">
+      <p class="eyebrow">PRIVATE WORKSPACE</p>
+      <h2>Make the work<br><em>visible.</em></h2>
+      <p class="login-copy">A shared place for the WALL-E build log, progress snapshots, and the little details worth keeping.</p>
+      <label for="password">Workspace password
+        <input id="password" type="password" placeholder="Enter password">
+      </label>
+      <button id="loginBtn" class="primary-button">Enter journal <span aria-hidden="true">↗</span></button>
+      <div id="loginMsg"></div>
+      <p class="login-footnote"><span class="status-dot"></span> GitHub-backed · private by default</p>
+    </div>
   </section>
 
   <section id="app" class="hidden">
-    <div class="layout">
-      <aside class="card">
-        <h2>Journal order</h2>
-        <button class="secondary full-width" id="fetchJournal">Fetch Content</button>
+    <div class="workspace-grid">
+      <aside class="sidebar panel">
+        <div class="sidebar-top">
+          <div><p class="eyebrow">PROJECT LOG</p><h2>Journal order</h2></div>
+          <button class="icon-button" id="addEntry" type="button" aria-label="Add empty journal entry" title="Add empty journal entry">+</button>
+        </div>
+        <button class="secondary full-width fetch-button" id="fetchJournal"><span aria-hidden="true">↻</span> Fetch latest content</button>
+        <div class="sidebar-rule"></div>
         <div id="sequence"></div>
+        <div class="sidebar-footer"><span class="mini-swatch"></span><span>Two contributors · one story</span></div>
       </aside>
       
-      <main class="card">
-        <div class="row">
-          <label>Writer
-            <select id="writer">
-              <option value="Nadoooor">@Nadoooor</option>
-              <option value="ZIZO932">@ZIZO932</option>
-            </select>
-          </label>
-          <label>Day<input id="day" type="number" min="1"></label>
-          <label>Date<input id="date" placeholder="16/9/2026"></label>
-          <label>Hours<input id="hours" placeholder="2.5 hours"></label>
+      <main class="journal-card panel">
+        <div class="journal-head">
+          <div><p class="eyebrow">EDITOR / ACTIVE ENTRY</p><h2>Shape the record</h2><p class="head-copy">Capture what moved the project forward today.</p></div>
+          <div class="head-stamp"><span class="stamp-line"></span><span>LIVE EDITOR</span></div>
         </div>
+        <div class="editor-layout" id="editorLayout">
+          <section class="write-panel">
+            <div class="row">
+              <label>Writer
+                <select id="writer">
+                  <option value="Nadoooor">@Nadoooor</option>
+                  <option value="ZIZO932">@ZIZO932</option>
+                </select>
+              </label>
+              <label>Day<input id="day" type="number" min="1"></label>
+              <label>Date<input id="date" placeholder="16/9/2026"></label>
+              <label>Hours<input id="hours" placeholder="2.5 hours"></label>
+            </div>
 
-        <label>Entry<textarea id="body" placeholder="What did you work on today?"></textarea></label>
-        
-        <!-- Image Upload Controls -->
-        <div class="upload-row">
-          <input type="file" id="imageInput" accept="image/*">
-          <button id="uploadImage" class="secondary">Upload Image to Repo</button>
+            <label class="editor-label">Entry<textarea id="body" placeholder="What did you work on today?"></textarea></label>
+
+            <div class="asset-panel">
+              <div class="asset-heading"><div><b>Media attachments</b><small>Upload once, reuse across entries</small></div><span class="asset-icon">↗</span></div>
+              <div class="upload-row">
+                <input type="file" id="imageInput" accept="image/*" multiple>
+                <label>Max width<input id="imageWidth" type="number" min="320" max="4096" value="1280"></label>
+                <label>Max height<input id="imageHeight" type="number" min="240" max="4096" value="1280"></label>
+              </div>
+              <p class="upload-hint">Original files stay unchanged. Dimensions only affect their Markdown display size.</p>
+            </div>
+
+            <div class="process-strip" aria-live="polite">
+              <div class="process-item" id="githubStatus"><span class="process-icon github-icon" aria-hidden="true">GH</span><span><b>GitHub</b><small>Idle</small></span><i></i></div>
+              <div class="process-item" id="draftStatus"><span class="process-icon draft-icon" aria-hidden="true">KV</span><span><b>Draft sync</b><small>Idle</small></span><i></i></div>
+              <div class="process-item" id="cdnStatus"><span class="process-icon cdn-icon" aria-hidden="true">UP</span><span><b>CDN upload</b><small>Idle</small></span><i></i></div>
+            </div>
+
+            <label class="links-label">Recording links<textarea id="links" class="small" placeholder="One URL per line"></textarea></label>
+
+            <div class="buttons">
+              <button id="save" class="primary-button">Save to GitHub <span aria-hidden="true">↗</span></button>
+              <button class="secondary" id="refresh">↻ Refresh</button>
+              <button class="secondary" id="toggleLayout">Split View</button>
+              <button class="secondary" id="toggleView">Rendered Preview</button>
+              <button class="secondary" id="copy">Copy Markdown</button>
+              <button class="secondary" id="download">Download</button>
+              <button class="danger" id="deleteEntry">Delete Entry</button>
+              <button class="secondary hidden" id="undoEntry">Undo Delete</button>
+            </div>
+
+            <p id="msg"></p>
+
+          </section>
+          <section class="preview-panel">
+            <div class="preview-heading"><div><p class="eyebrow">OUTPUT</p><h3>Selected entry</h3></div><span class="preview-badge"><span></span> LIVE</span></div>
+            <pre id="preview"></pre>
+            <div id="renderedPreview" class="hidden"></div>
+          </section>
         </div>
-
-        <label>Recording links<textarea id="links" class="small" placeholder="One URL per line"></textarea></label>
-
-        <div class="buttons">
-          <button id="save">Save to GitHub</button>
-          <button class="secondary" id="refresh">Refresh</button>
-          <button class="secondary" id="toggleView">Toggle Rendered Preview</button>
-          <button class="secondary" id="copy">Copy full Markdown</button>
-          <button class="secondary" id="download">Download</button>
-        </div>
-        
-        <p id="msg"></p>
-
-        <h3>Markdown View</h3>
-        <!-- Raw Code View -->
-        <pre id="preview"></pre>
-        <!-- Rendered HTML View -->
-        <div id="renderedPreview" class="hidden"></div>
       </main>
     </div>
   </section>

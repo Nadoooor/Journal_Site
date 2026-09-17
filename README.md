@@ -11,9 +11,10 @@ frontend supports:
 - Fetching and parsing the existing `JOURNAL.md`
 - Alternating writer/day slots for `Nadoooor` and `ZIZO932`
 - Saving one entry without overwriting the other writer's work
+- Shared draft autosave for work that has not been published yet
 - Raw Markdown and rendered preview views
 - Markdown download and clipboard copy
-- Uploading images into `Images/Journal`
+- Uploading images to the Hack Club CDN
 
 ## Cloudflare Worker
 
@@ -46,6 +47,25 @@ Add these as Worker secrets. Never commit their values:
 - `JOURNAL_PASSWORD`: the shared login password
 - `GITHUB_TOKEN`: a GitHub token with Contents read/write access only to this repository
 - `SESSION_SECRET`: a long random signing secret
+- `CDN_API_KEY`: a Hack Club CDN API key
+
+Create a KV namespace for shared drafts and bind it to the Worker as
+`JOURNAL_DRAFTS`:
+
+```bash
+npx wrangler kv namespace create JOURNAL_DRAFTS
+```
+
+Copy the returned namespace ID into `worker/wrangler.toml`:
+
+```toml
+[[kv_namespaces]]
+binding = "JOURNAL_DRAFTS"
+id = "your-kv-namespace-id"
+```
+
+Then deploy the Worker again. Drafts are autosaved after edits and removed
+from KV after the corresponding entry is successfully published to GitHub.
 
 The GitHub token must have access to the organization repository if the journal
 is owned by an organization. The organization may need to approve the token.

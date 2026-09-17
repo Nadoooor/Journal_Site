@@ -163,12 +163,12 @@ textarea.small { height: 94px; }
 #msg, #loginMsg { min-height: 22px; margin: 12px 0 0; font-size: 12px; }
 .ok { color: var(--green); }
 .err { color: #ff9b83; }
-.preview-panel { display: none; padding-left: 23px; border-left: 1px solid var(--line); }
-.editor-layout.split .preview-panel { display: block; }
+.preview-panel { display: block; padding-top: 24px; border-top: 1px solid var(--line); }
+.editor-layout.split .preview-panel { padding-top: 0; border-top: 0; padding-left: 23px; border-left: 1px solid var(--line); }
 .preview-heading { justify-content: space-between; align-items: flex-start; margin-bottom: 13px; }
 .preview-heading .eyebrow { margin-bottom: 5px; }
 .preview-badge { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border: 1px solid #4f83e8; border-radius: 99px; color: var(--teal); background: var(--teal-pale); font: 700 9px 'Space Grotesk', sans-serif; letter-spacing: .1em; }
-pre, #renderedPreview { max-height: 660px; overflow-y: auto; margin: 0; padding: 18px; border: 1px solid var(--line); border-radius: 13px; color: #a9bbb7; background: #0d181b; white-space: pre-wrap; font: 12px/1.7 'Space Mono', Consolas, monospace; }
+pre, #renderedPreview { min-height: 260px; max-height: 760px; overflow: auto; resize: vertical; margin: 0; padding: 18px; border: 1px solid var(--line); border-radius: 13px; color: #a9bbb7; background: #0d181b; white-space: pre-wrap; font: 12px/1.7 'Space Mono', Consolas, monospace; }
 #renderedPreview { white-space: normal; line-height: 1.7; }
 #renderedPreview h1, #renderedPreview h2, #renderedPreview h3 { margin-top: 1.2em; color: var(--ink); }
 #renderedPreview a { color: var(--teal-dark); }

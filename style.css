@@ -110,7 +110,26 @@ input:focus, select:focus, textarea:focus { border-color: var(--teal); backgroun
 .lapse-heading small { display: block; margin-top: 4px; color: var(--ink-soft); font-size: 11px; }
 .lapse-mark { display: grid; width: 29px; height: 29px; place-items: center; border: 1px solid #8b5cf6; border-radius: 9px; color: #ddd6fe; background: #312263; font: 700 13px 'Space Grotesk', sans-serif; }
 .lapse-controls { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; }
-.lapse-controls select { margin-top: 0; border-color: #46538c; background: #0d142d; }
+.visually-hidden { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; overflow: hidden !important; clip: rect(0, 0, 0, 0) !important; white-space: nowrap !important; border: 0 !important; }
+.recording-picker { position: relative; min-width: 0; }
+.recording-trigger { display: flex; align-items: center; width: 100%; min-height: 55px; gap: 10px; padding: 8px 11px; border: 1px solid #46538c; border-radius: 11px; color: var(--ink); background: #0d142d; text-align: left; }
+.recording-trigger:hover, .recording-trigger[aria-expanded="true"] { border-color: #8b5cf6; box-shadow: 0 0 0 3px #8b5cf622; }
+.recording-trigger-icon, .recording-option-icon { display: grid; flex: 0 0 29px; width: 29px; height: 29px; place-items: center; border-radius: 8px; color: #ddd6fe; background: #312263; font-size: 10px; }
+.recording-trigger > span:nth-child(2) { min-width: 0; }
+.recording-trigger b, .recording-trigger small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.recording-trigger b { color: #f5f3ff; font: 600 12px 'Space Grotesk', sans-serif; }
+.recording-trigger small { margin-top: 3px; color: #9ca8d1; font-size: 10px; }
+.recording-chevron { margin-left: auto; color: #c4b5fd; font-size: 17px; }
+.recording-menu { position: absolute; z-index: 5; top: calc(100% + 8px); right: 0; left: 0; display: grid; gap: 5px; max-height: 280px; overflow-y: auto; padding: 7px; border: 1px solid #46538c; border-radius: 13px; background: #111936; box-shadow: 0 18px 38px #050817aa; }
+.recording-option { display: flex; align-items: center; width: 100%; gap: 9px; padding: 10px; border: 1px solid transparent; border-radius: 9px; color: var(--ink); background: transparent; text-align: left; }
+.recording-option:hover, .recording-option:focus-visible { border-color: #596bb4; outline: 0; background: #202b55; }
+.recording-option-copy { min-width: 0; flex: 1; }
+.recording-option-copy b, .recording-option-copy small, .recording-option-copy em { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.recording-option-copy b { color: #f5f3ff; font: 600 12px 'Space Grotesk', sans-serif; }
+.recording-option-copy small { margin-top: 3px; color: #aeb8d8; font-size: 10px; }
+.recording-option-copy em { margin-top: 4px; color: #818db7; font-size: 9px; font-style: normal; }
+.duration-pill { flex: 0 0 auto; padding: 5px 7px; border: 1px solid #6650a8; border-radius: 99px; color: #ddd6fe; background: #312263; font: 700 10px 'Space Grotesk', sans-serif; }
+.recording-empty { padding: 16px 12px; color: #aeb8d8; font-size: 11px; text-align: center; }
 .lapse-details { min-height: 18px; margin: 10px 0 0; color: #b8b9dc; font-size: 11px; }
 .upload-row { display: flex; align-items: end; gap: 10px; }
 .upload-row > input[type="file"] { flex: 1; min-width: 0; padding: 9px; }
@@ -181,7 +200,7 @@ pre, #renderedPreview { max-height: 660px; overflow-y: auto; margin: 0; padding:
   .upload-row > input[type="file"] { flex-basis: 100%; }
   .process-strip { grid-template-columns: 1fr; }
   .lapse-controls { grid-template-columns: 1fr 1fr; }
-  .lapse-controls select { grid-column: 1 / -1; }
+  .recording-picker { grid-column: 1 / -1; }
   .buttons > button { flex: 1 1 auto; }
 }
 @media (max-width: 440px) {

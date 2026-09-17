@@ -90,7 +90,11 @@
             <div class="lapse-panel">
               <div class="lapse-heading"><div><p class="eyebrow">LAPSE RECORDINGS</p><b>Attach a focused session</b><small>Choose a recording from the active contributor</small></div><span class="lapse-mark">L</span></div>
               <div class="lapse-controls">
-                <select id="lapseRecording" aria-label="Choose a Lapse recording"><option value="">Load recordings to choose one</option></select>
+                <div class="recording-picker">
+                  <select id="lapseRecording" class="visually-hidden" aria-hidden="true" tabindex="-1"><option value="">Load recordings to choose one</option></select>
+                  <button class="recording-trigger" id="lapseRecordingTrigger" type="button" aria-haspopup="listbox" aria-expanded="false"><span class="recording-trigger-icon">▶</span><span><b id="lapseRecordingLabel">Choose a recording</b><small id="lapseRecordingMeta">Load your published sessions</small></span><span class="recording-chevron">⌄</span></button>
+                  <div class="recording-menu hidden" id="lapseRecordingMenu" role="listbox" aria-label="Lapse recordings"></div>
+                </div>
                 <button class="secondary" id="loadLapse" type="button">Load recordings</button>
                 <button class="secondary" id="connectLapse" type="button">Connect Lapse</button>
               </div>

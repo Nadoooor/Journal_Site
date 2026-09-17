@@ -355,8 +355,11 @@ function currentDraft() {
 
 function formatRecordingDuration(seconds) {
   const totalSeconds = Math.max(0, Math.round(Number(seconds) || 0));
+  const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor(totalSeconds / 60);
-  return `${minutes}:${String(totalSeconds % 60).padStart(2, '0')}`;
+  if (hours) return `${hours}h ${minutes % 60}m`;
+  if (minutes) return `${minutes}m`;
+  return '<1m';
 }
 
 function formatRecordingDate(timestamp) {
@@ -387,6 +390,48 @@ function renderLapseRecordings(recordings) {
   recordings.forEach(recording => {
     select.add(new Option(`${recording.name} · ${formatRecordingDuration(recording.duration)}`, recording.id));
   });
+  const menu = $('lapseRecordingMenu');
+  menu.replaceChildren();
+  if (!recordings.length) {
+    menu.innerHTML = '<div class="recording-empty">No published recordings found yet.</div>';
+    updateRecordingTrigger();
+    return;
+  }
+  recordings.forEach(recording => {
+    const option = document.createElement('button');
+    option.type = 'button';
+    option.className = 'recording-option';
+    option.dataset.recordingId = recording.id;
+    option.setAttribute('role', 'option');
+    option.innerHTML = `<span class="recording-option-icon">▶</span><span class="recording-option-copy"><b>${escapeHtml(recording.name)}</b><small>${escapeHtml(recording.description || 'Published Lapse session')}</small><em>${escapeHtml(formatRecordingDate(recording.createdAt))}</em></span><span class="duration-pill">${formatRecordingDuration(recording.duration)}</span>`;
+    option.addEventListener('click', () => {
+      select.value = recording.id;
+      updateRecordingTrigger(recording);
+      closeRecordingMenu();
+      attachLapseRecording();
+    });
+    menu.append(option);
+  });
+  updateRecordingTrigger();
+}
+
+function updateRecordingTrigger(recording = lapseRecordings.find(item => item.id === $('lapseRecording').value)) {
+  $('lapseRecordingLabel').textContent = recording ? recording.name : 'Choose a recording';
+  $('lapseRecordingMeta').textContent = recording
+    ? `${formatRecordingDate(recording.createdAt)} · ${formatRecordingDuration(recording.duration)}`
+    : 'Load your published sessions';
+}
+
+function closeRecordingMenu() {
+  $('lapseRecordingMenu').classList.add('hidden');
+  $('lapseRecordingTrigger').setAttribute('aria-expanded', 'false');
+}
+
+function toggleRecordingMenu() {
+  const menu = $('lapseRecordingMenu');
+  const isOpen = !menu.classList.contains('hidden');
+  menu.classList.toggle('hidden', isOpen);
+  $('lapseRecordingTrigger').setAttribute('aria-expanded', String(!isOpen));
 }
 
 async function connectLapse() {
@@ -678,6 +723,10 @@ $('undoEntry').addEventListener('click', undoEntry);
 $('connectLapse').addEventListener('click', connectLapse);
 $('loadLapse').addEventListener('click', loadLapseRecordings);
 $('lapseRecording').addEventListener('change', attachLapseRecording);
+$('lapseRecordingTrigger').addEventListener('click', toggleRecordingMenu);
+document.addEventListener('click', event => {
+  if (!event.target.closest('.recording-picker')) closeRecordingMenu();
+});
 $('toggleLayout').addEventListener('click', () => {
   $('editorLayout').classList.toggle('split');
   $('toggleLayout').textContent = $('editorLayout').classList.contains('split') ? 'Stacked View' : 'Split View';

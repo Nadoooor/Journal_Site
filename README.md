@@ -58,10 +58,12 @@ Register this exact Lapse OAuth redirect URI:
 https://nadoooor.github.io/Journal_Site/
 ```
 
-Each contributor connects their own Lapse account from the editor. The Worker
-stores the OAuth tokens in `JOURNAL_DRAFTS`; the browser never receives the
-client secret or refresh token. The Lapse handle must match the selected journal
-writer before recordings can be loaded.
+Each contributor connects their own Lapse account from the editor. Lapse access
+and refresh tokens are stored in the connecting browser's local storage, not in
+the shared Worker KV. The Worker keeps only temporary OAuth state and never
+exposes the client secret. The selected journal writer is only the local device
+slot where that connected Lapse account is stored; the usernames do not need to
+match.
 
 Create a KV namespace for shared drafts and bind it to the Worker as
 `JOURNAL_DRAFTS`:

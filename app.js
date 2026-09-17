@@ -2,6 +2,7 @@ const API_URL = 'https://journaling.nadersayed742.workers.dev';
 const REPOSITORY_RAW_BASE = 'https://raw.githubusercontent.com/WALL-Es/WALL-E/main/';
 const USERS = ['Nadoooor', 'ZIZO932'];
 const TOKEN_KEY = 'walle-journal-session';
+const LAPSE_TOKEN_PREFIX = 'walle-lapse-token:';
 
 let entries = [];
 let currentMarkdown = '';
@@ -363,6 +364,22 @@ function formatRecordingDate(timestamp) {
   return new Date(Number(timestamp)).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
+function lapseStorageKey(github) {
+  return `${LAPSE_TOKEN_PREFIX}${github}`;
+}
+
+function getLapseToken(github) {
+  try {
+    return JSON.parse(localStorage.getItem(lapseStorageKey(github)) || 'null');
+  } catch {
+    return null;
+  }
+}
+
+function saveLapseToken(github, token) {
+  if (token?.accessToken) localStorage.setItem(lapseStorageKey(github), JSON.stringify(token));
+}
+
 function renderLapseRecordings(recordings) {
   lapseRecordings = recordings;
   const select = $('lapseRecording');
@@ -388,13 +405,21 @@ async function loadLapseRecordings() {
   try {
     $('loadLapse').disabled = true;
     $('lapseDetails').textContent = 'Loading published recordings...';
-    const data = await api(`/api/lapse/recordings?github=${encodeURIComponent($('writer').value)}`);
+    const github = $('writer').value;
+    const token = getLapseToken(github);
+    const headers = token ? {
+      'X-Lapse-Token': token.accessToken,
+      'X-Lapse-Refresh-Token': token.refreshToken || '',
+      'X-Lapse-Expires-At': String(token.expiresAt || 0)
+    } : {};
+    const data = await api(`/api/lapse/recordings?github=${encodeURIComponent(github)}`, { headers });
     if (!data.connected) {
       $('lapseDetails').textContent = 'This contributor is not connected yet. Use Connect Lapse first.';
       renderLapseRecordings([]);
       return;
     }
     renderLapseRecordings(data.recordings || []);
+    saveLapseToken(github, data.lapse);
     $('lapseDetails').textContent = `${data.recordings.length} recording${data.recordings.length === 1 ? '' : 's'} ready to attach.`;
   } catch (error) {
     $('lapseDetails').textContent = error.message;
@@ -422,7 +447,8 @@ async function handleLapseCallback() {
   const state = params.get('state');
   if (!code || !state) return;
   try {
-    await api('/api/lapse/callback', { method: 'POST', body: JSON.stringify({ code, state }) });
+    const data = await api('/api/lapse/callback', { method: 'POST', body: JSON.stringify({ code, state }) });
+    saveLapseToken(data.github, data.lapse);
     window.history.replaceState({}, document.title, window.location.pathname);
     $('msg').className = 'ok';
     $('msg').textContent = 'Lapse account connected. Load recordings to browse sessions.';

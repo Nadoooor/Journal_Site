@@ -15,6 +15,7 @@ frontend supports:
 - Raw Markdown and rendered preview views
 - Markdown download and clipboard copy
 - Uploading images to the Hack Club CDN
+- Lapse OAuth account linking and a recording picker for each contributor
 
 ## Cloudflare Worker
 
@@ -48,6 +49,19 @@ Add these as Worker secrets. Never commit their values:
 - `GITHUB_TOKEN`: a GitHub token with Contents read/write access only to this repository
 - `SESSION_SECRET`: a long random signing secret
 - `CDN_API_KEY`: a Hack Club CDN API key
+- `LAPSE_CLIENT_ID`: the Lapse OAuth client ID
+- `LAPSE_CLIENT_SECRET`: the Lapse OAuth client secret
+
+Register this exact Lapse OAuth redirect URI:
+
+```text
+https://nadoooor.github.io/Journal_Site/
+```
+
+Each contributor connects their own Lapse account from the editor. The Worker
+stores the OAuth tokens in `JOURNAL_DRAFTS`; the browser never receives the
+client secret or refresh token. The Lapse handle must match the selected journal
+writer before recordings can be loaded.
 
 Create a KV namespace for shared drafts and bind it to the Worker as
 `JOURNAL_DRAFTS`:

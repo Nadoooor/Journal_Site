@@ -87,7 +87,16 @@
               <div class="process-item" id="cdnStatus"><span class="process-icon cdn-icon" aria-hidden="true">UP</span><span><b>CDN upload</b><small>Idle</small></span><i></i></div>
             </div>
 
-            <label class="links-label">Recording links<textarea id="links" class="small" placeholder="One URL per line"></textarea></label>
+            <div class="lapse-panel">
+              <div class="lapse-heading"><div><p class="eyebrow">LAPSE RECORDINGS</p><b>Attach a focused session</b><small>Choose a recording from the active contributor</small></div><span class="lapse-mark">L</span></div>
+              <div class="lapse-controls">
+                <select id="lapseRecording" aria-label="Choose a Lapse recording"><option value="">Load recordings to choose one</option></select>
+                <button class="secondary" id="loadLapse" type="button">Load recordings</button>
+                <button class="secondary" id="connectLapse" type="button">Connect Lapse</button>
+              </div>
+              <p id="lapseDetails" class="lapse-details">Connect your Lapse account to browse your published sessions.</p>
+            </div>
+            <label class="links-label">Saved recording links<textarea id="links" class="small" placeholder="Selected Lapse recordings and other URLs appear here"></textarea></label>
 
             <div class="buttons">
               <button id="save" class="primary-button">Save to GitHub <span aria-hidden="true">↗</span></button>

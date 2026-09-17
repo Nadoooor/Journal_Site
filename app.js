@@ -10,6 +10,7 @@ let draftSaveTimer;
 let draftSaveVersion = 0;
 let undoState;
 let undoTimer;
+let lapseRecordings = [];
 
 const $ = id => document.getElementById(id);
 const today = () => {
@@ -351,6 +352,86 @@ function currentDraft() {
   };
 }
 
+function formatRecordingDuration(seconds) {
+  const totalSeconds = Math.max(0, Math.round(Number(seconds) || 0));
+  const minutes = Math.floor(totalSeconds / 60);
+  return `${minutes}:${String(totalSeconds % 60).padStart(2, '0')}`;
+}
+
+function formatRecordingDate(timestamp) {
+  if (!timestamp) return 'Date unavailable';
+  return new Date(Number(timestamp)).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+function renderLapseRecordings(recordings) {
+  lapseRecordings = recordings;
+  const select = $('lapseRecording');
+  select.replaceChildren(new Option(recordings.length ? 'Choose a recording...' : 'No published recordings found', ''));
+  recordings.forEach(recording => {
+    select.add(new Option(`${recording.name} · ${formatRecordingDuration(recording.duration)}`, recording.id));
+  });
+}
+
+async function connectLapse() {
+  try {
+    $('connectLapse').disabled = true;
+    $('lapseDetails').textContent = 'Opening Lapse authorization...';
+    const data = await api('/api/lapse/start', { method: 'POST', body: JSON.stringify({ github: $('writer').value }) });
+    window.location.href = data.url;
+  } catch (error) {
+    $('lapseDetails').textContent = error.message;
+    $('connectLapse').disabled = false;
+  }
+}
+
+async function loadLapseRecordings() {
+  try {
+    $('loadLapse').disabled = true;
+    $('lapseDetails').textContent = 'Loading published recordings...';
+    const data = await api(`/api/lapse/recordings?github=${encodeURIComponent($('writer').value)}`);
+    if (!data.connected) {
+      $('lapseDetails').textContent = 'This contributor is not connected yet. Use Connect Lapse first.';
+      renderLapseRecordings([]);
+      return;
+    }
+    renderLapseRecordings(data.recordings || []);
+    $('lapseDetails').textContent = `${data.recordings.length} recording${data.recordings.length === 1 ? '' : 's'} ready to attach.`;
+  } catch (error) {
+    $('lapseDetails').textContent = error.message;
+  } finally {
+    $('loadLapse').disabled = false;
+  }
+}
+
+function attachLapseRecording() {
+  const recording = lapseRecordings.find(item => item.id === $('lapseRecording').value);
+  if (!recording) return;
+  const label = `${recording.name} · ${formatRecordingDuration(recording.duration)} · ${formatRecordingDate(recording.createdAt)}`;
+  const markdownLink = `[${label}](${recording.url})`;
+  const currentLinks = $('links').value.split(/\n+/).map(link => link.trim()).filter(Boolean);
+  if (!currentLinks.includes(markdownLink)) $('links').value = [...currentLinks, markdownLink].join('\n');
+  $('lapseDetails').textContent = `${recording.name} attached to this entry.`;
+  updateActiveEntryFromForm();
+  render();
+  scheduleDraftSave();
+}
+
+async function handleLapseCallback() {
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('code');
+  const state = params.get('state');
+  if (!code || !state) return;
+  try {
+    await api('/api/lapse/callback', { method: 'POST', body: JSON.stringify({ code, state }) });
+    window.history.replaceState({}, document.title, window.location.pathname);
+    $('msg').className = 'ok';
+    $('msg').textContent = 'Lapse account connected. Load recordings to browse sessions.';
+  } catch (error) {
+    $('msg').className = 'err';
+    $('msg').textContent = `Lapse connection failed: ${error.message}`;
+  }
+}
+
 function updateActiveEntryFromForm() {
   const draft = currentDraft();
   let entry = entries.find(item => item.day === draft.day && item.github === draft.github);
@@ -568,6 +649,9 @@ $('imageInput').addEventListener('change', async () => {
 $('save').addEventListener('click', saveEntry);
 $('deleteEntry').addEventListener('click', deleteEntry);
 $('undoEntry').addEventListener('click', undoEntry);
+$('connectLapse').addEventListener('click', connectLapse);
+$('loadLapse').addEventListener('click', loadLapseRecordings);
+$('lapseRecording').addEventListener('change', attachLapseRecording);
 $('toggleLayout').addEventListener('click', () => {
   $('editorLayout').classList.toggle('split');
   $('toggleLayout').textContent = $('editorLayout').classList.contains('split') ? 'Stacked View' : 'Split View';
@@ -622,6 +706,7 @@ async function initialize() {
   $('app').classList.remove('hidden');
   $('logout').classList.remove('hidden');
   await loadJournal();
+  await handleLapseCallback();
 }
 
 window.addEventListener('DOMContentLoaded', () => {

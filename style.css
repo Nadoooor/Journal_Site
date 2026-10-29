@@ -168,7 +168,7 @@ textarea.small { height: 94px; }
 .preview-heading { justify-content: space-between; align-items: flex-start; margin-bottom: 13px; }
 .preview-heading .eyebrow { margin-bottom: 5px; }
 .preview-badge { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border: 1px solid #4f83e8; border-radius: 99px; color: var(--teal); background: var(--teal-pale); font: 700 9px 'Space Grotesk', sans-serif; letter-spacing: .1em; }
-pre, #renderedPreview { min-height: 260px; max-height: 760px; overflow: auto; resize: vertical; margin: 0; padding: 18px; border: 1px solid var(--line); border-radius: 13px; color: #a9bbb7; background: #0d181b; white-space: pre-wrap; font: 12px/1.7 'Space Mono', Consolas, monospace; }
+#preview, #renderedPreview { min-height: 260px; max-height: 760px; overflow: auto; resize: vertical; margin: 0; padding: 18px; border: 1px solid var(--line); border-radius: 13px; color: #a9bbb7; background: #0d181b; white-space: pre-wrap; font: 12px/1.7 'Space Mono', Consolas, monospace; }
 #renderedPreview { white-space: normal; line-height: 1.7; }
 #renderedPreview h1, #renderedPreview h2, #renderedPreview h3 { margin-top: 1.2em; color: var(--ink); }
 #renderedPreview a { color: var(--teal-dark); }
@@ -209,3 +209,17 @@ pre, #renderedPreview { min-height: 260px; max-height: 760px; overflow: auto; re
   h1 { font-size: 20px; }
   .pill { font-size: 11px; }
 }
+
+#renderedPreview { font-family: 'DM Sans', sans-serif; font-size: 14px; overflow-wrap: anywhere; }
+#renderedPreview > :first-child { margin-top: 0; }
+#renderedPreview h1, #renderedPreview h2, #renderedPreview h3,
+#renderedPreview h4, #renderedPreview h5, #renderedPreview h6 { margin-bottom: .6em; color: var(--ink); }
+#renderedPreview a { color: var(--teal); }
+#renderedPreview pre { min-height: 0; margin: 1em 0; padding: 12px; overflow-x: auto; white-space: pre; border-radius: 8px; background: #071012; }
+#renderedPreview code { font-family: 'Space Mono', Consolas, monospace; font-size: .9em; background: #071012; }
+#renderedPreview :not(pre) > code { padding: .15em .3em; border-radius: 4px; }
+#renderedPreview blockquote { margin: 1em 0; padding: .2em 1em; border-left: 3px solid var(--teal); color: var(--ink-soft); }
+#renderedPreview table { display: block; max-width: 100%; overflow-x: auto; border-collapse: collapse; margin: 1em 0; }
+#renderedPreview th, #renderedPreview td { padding: 8px 12px; border: 1px solid var(--line); }
+#renderedPreview th { color: var(--ink); background: var(--paper-bright); }
+#renderedPreview hr { border: 0; border-top: 1px solid var(--line); margin: 1.5em 0; }

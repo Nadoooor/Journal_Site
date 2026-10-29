@@ -46,26 +46,76 @@ function normalizeImageSource(source) {
 }
 
 function renderMarkdown(markdown) {
-  let html = escapeHtml(markdown);
-  html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
-  html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
-  html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
-  html = html.replace(/^[-*] (.+)$/gm, '<li>$1</li>');
-  html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
-  html = html.replace(/!\[([^\]]*)\]\(([^)\n]+)\)/g, (match, alt, source) => {
-    const relativeSource = source.trim().replace(/^\.?\//, '');
-    const imageSource = /^https?:\/\//i.test(relativeSource)
-      ? normalizeImageSource(relativeSource)
-      : `${REPOSITORY_RAW_BASE}${relativeSource.split('/').map(segment => encodeURIComponent(segment)).join('/')}`;
-    return `<img alt="${alt}" src="${imageSource}">`;
+  const html = marked.parse(markdown, { gfm: true, breaks: true });
+  const fragment = DOMPurify.sanitize(html, {
+    RETURN_DOM_FRAGMENT: true,
+    USE_PROFILES: { html: true },
+    FORBID_TAGS: ['style', 'form', 'input', 'button', 'textarea', 'select'],
+    FORBID_ATTR: ['style', 'id', 'name']
   });
-  html = html.replace(/&lt;img\s+src=&quot;([^&]+)&quot;\s+alt=&quot;([^&]*)&quot;\s+width=&quot;(\d+)&quot;\s+height=&quot;(\d+)&quot;&gt;/gi, (match, source, alt, width, height) => {
-    return `<img src="${normalizeImageSource(source)}" alt="${alt}" width="${width}" height="${height}">`;
+  fragment.querySelectorAll('img').forEach(image => {
+    const source = image.getAttribute('src');
+    if (!source) return;
+    try {
+      const url = new URL(source, REPOSITORY_RAW_BASE);
+      if (!['http:', 'https:'].includes(url.protocol)) {
+        image.removeAttribute('src');
+        return;
+      }
+      image.src = normalizeImageSource(url.href);
+      image.loading = 'lazy';
+      image.decoding = 'async';
+    } catch {
+      image.removeAttribute('src');
+    }
   });
-  html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
-  html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-  html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-  return html.replace(/\n/g, '<br>');
+  fragment.querySelectorAll('a[href]').forEach(link => {
+    const source = link.getAttribute('href');
+    if (source.startsWith('#')) return;
+    try {
+      const url = new URL(source, REPOSITORY_RAW_BASE);
+      if (!['http:', 'https:', 'mailto:'].includes(url.protocol)) {
+        link.removeAttribute('href');
+        return;
+      }
+      link.href = url.href;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+    } catch {
+      link.removeAttribute('href');
+    }
+  });
+  const container = document.createElement('div');
+  container.append(fragment);
+  return container.innerHTML;
+}
+
+async function copyText(text) {
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return;
+    }
+  } catch {
+    // Local files and browsers denying clipboard permission may still allow copy.
+  }
+  const active = document.activeElement;
+  const selection = active && typeof active.selectionStart === 'number'
+    ? [active.selectionStart, active.selectionEnd, active.selectionDirection] : null;
+  const field = document.createElement('textarea');
+  field.value = text;
+  field.readOnly = true;
+  field.style.cssText = 'position:fixed;top:0;left:-9999px;';
+  document.body.append(field);
+  try {
+    field.select();
+    field.setSelectionRange(0, text.length);
+    if (!document.execCommand('copy')) throw new Error('Clipboard unavailable');
+  } finally {
+    field.remove();
+    active?.focus({ preventScroll: true });
+    if (selection) active.setSelectionRange(...selection);
+  }
 }
 
 function parseMarkdown(markdown) {
@@ -254,14 +304,34 @@ function logout() {
   $('sync').textContent = 'Not connected';
 }
 
-function readImage(file, index) {
+function fitImageDimensions(width, height, bounds) {
+  const scale = Math.min(1, bounds.width / width, bounds.height / height);
+  return { width: Math.max(1, Math.round(width * scale)), height: Math.max(1, Math.round(height * scale)) };
+}
+
+async function readImage(file, bounds) {
+  // The upload service may reuse a filename. Key it by bytes, not clipboard position.
+  const digest = await crypto.subtle.digest('SHA-256', await file.arrayBuffer());
+  const hash = Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
+  const safeName = file.name.replace(/[^A-Za-z0-9._-]/g, '_');
+  const dot = safeName.lastIndexOf('.');
+  const filename = dot > 0
+    ? `${safeName.slice(0, dot)}-${hash}${safeName.slice(dot)}`
+    : `${safeName}-${hash}`;
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = () => resolve({
-      filename: file.name.replace(/[^A-Za-z0-9._-]/g, '_'),
-      content: reader.result.split(',')[1],
-      contentType: file.type
-    });
+    reader.onload = () => {
+      const image = new Image();
+      image.onload = () => resolve({
+        filename,
+        displayName: safeName,
+        content: reader.result.split(',')[1],
+        contentType: file.type,
+        dimensions: fitImageDimensions(image.naturalWidth, image.naturalHeight, bounds)
+      });
+      image.onerror = () => reject(new Error(`Could not decode ${file.name}.`));
+      image.src = reader.result;
+    };
     reader.onerror = () => reject(new Error(`Could not read ${file.name}.`));
     reader.readAsDataURL(file);
   });
@@ -269,22 +339,22 @@ function readImage(file, index) {
 
 function imageDisplayDimensions() {
   return {
-    width: Math.max(1, Math.min(4096, Number($('imageWidth').value) || 1280)),
-    height: Math.max(1, Math.min(4096, Number($('imageHeight').value) || 1280))
+    width: Math.round(Math.max(1, Math.min(4096, Number($('imageWidth').value) || 1280))),
+    height: Math.round(Math.max(1, Math.min(4096, Number($('imageHeight').value) || 1280)))
   };
 }
 
 async function uploadImages(files) {
   setProcessStatus('cdnStatus', 'working', `Uploading ${files.length} file${files.length === 1 ? '' : 's'}`);
-  const imageData = await Promise.all(files.map((file, index) => readImage(file, index)));
-  const dimensions = imageDisplayDimensions();
+  const bounds = imageDisplayDimensions();
   try {
+    const imageData = await Promise.all(files.map(file => readImage(file, bounds)));
     const uploaded = await Promise.all(imageData.map(async image => {
       const data = await api('/api/upload-image', {
         method: 'POST',
-        body: JSON.stringify(image)
+        body: JSON.stringify({ filename: image.filename, content: image.content, contentType: image.contentType })
       });
-      return { name: image.filename, path: data.path, reused: data.reused };
+      return { name: image.displayName, path: data.path, reused: data.reused, dimensions: image.dimensions };
     }));
     const reusedCount = uploaded.filter(image => image.reused).length;
     const uploadedCount = uploaded.length - reusedCount;
@@ -293,7 +363,7 @@ async function uploadImages(files) {
       reusedCount ? `${reusedCount} reused` : ''
     ].filter(Boolean).join(', ');
     setProcessStatus('cdnStatus', 'success', status);
-    $('body').value += `\n${uploaded.map(image => `<img src="${image.path}" alt="${image.name}" width="${dimensions.width}" height="${dimensions.height}">`).join('\n')}\n`;
+    $('body').value += `\n${uploaded.map(image => `<img src="${escapeHtml(image.path)}" alt="${escapeHtml(image.name)}" width="${image.dimensions.width}" height="${image.dimensions.height}">`).join('\n')}\n`;
     updateActiveEntryFromForm();
     scheduleDraftSave();
     render();
@@ -737,9 +807,22 @@ $('toggleView').addEventListener('click', () => {
   render();
 });
 $('copy').addEventListener('click', async () => {
-  await navigator.clipboard.writeText(activeEntryMarkdown());
-  $('msg').className = 'ok';
-  $('msg').textContent = 'Markdown copied.';
+  try {
+    await copyText(activeEntryMarkdown());
+    $('msg').className = 'ok';
+    $('msg').textContent = 'Markdown copied.';
+  } catch {
+    renderedView = false;
+    $('toggleView').textContent = 'Show Rendered Preview';
+    render();
+    const range = document.createRange();
+    range.selectNodeContents($('preview'));
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+    $('msg').className = 'err';
+    $('msg').textContent = 'Automatic copy is unavailable. Markdown selected below; use your device’s Copy command.';
+  }
 });
 async function downloadJournal() {
   const button = $('download');

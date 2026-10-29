@@ -75,10 +75,10 @@
               <div class="asset-heading"><div><b>Media attachments</b><small>Upload once, reuse across entries</small></div><span class="asset-icon">↗</span></div>
               <div class="upload-row">
                 <input type="file" id="imageInput" accept="image/*" multiple>
-                <label>Max width<input id="imageWidth" type="number" min="320" max="4096" value="1280"></label>
-                <label>Max height<input id="imageHeight" type="number" min="240" max="4096" value="1280"></label>
+                <label>Max width<input id="imageWidth" type="number" min="1" max="4096" value="1280"></label>
+                <label>Max height<input id="imageHeight" type="number" min="1" max="4096" value="1280"></label>
               </div>
-              <p class="upload-hint">Original files stay unchanged. Dimensions only affect their Markdown display size.</p>
+              <p class="upload-hint">Original files stay unchanged. Images fit these bounds without stretching or enlarging. Dimensions only affect their Markdown display size.</p>
             </div>
 
             <div class="process-strip" aria-live="polite">
@@ -126,6 +126,8 @@
     </div>
   </section>
 </div>
+<script src="vendor/marked.umd.js"></script>
+<script src="vendor/purify.min.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

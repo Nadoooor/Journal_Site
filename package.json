@@ -1,0 +1,27 @@
+{
+  "name": "journal_site",
+  "version": "1.0.0",
+  "description": "A small GitHub Pages journal editor backed by a Cloudflare Worker. It keeps the\r shared password and GitHub token on the Worker, not in the public frontend.",
+  "main": "app.js",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Nadoooor/Journal_Site.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Nadoooor/Journal_Site/issues"
+  },
+  "homepage": "https://github.com/Nadoooor/Journal_Site#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "dompurify": "^3.4.17",
+    "marked": "^18.1.2"
+  },
+  "private": true
+}

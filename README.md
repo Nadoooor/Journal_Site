@@ -97,3 +97,28 @@ commit the frontend, and reload the Pages site.
 Rotate any password or token that has been pasted into a chat, screenshot, or
 public repository. The Worker issues a one-day signed session token after
 login, and journal/image requests require that token.
+
+## Preview, clipboard and image sizing
+
+Pasted and selected image uploads include a SHA-256 content fingerprint in the
+filename. Different images with the same filename no longer collide in upload
+caches; identical content retains a stable upload identity. Original image bytes
+are preserved. Width and height settings are maximum display bounds: each image
+keeps its aspect ratio and is never enlarged beyond its natural dimensions.
+
+The preview uses bundled Marked and DOMPurify builds in `vendor/` (with their
+licenses) for Markdown parsing and HTML sanitization. These files are served by
+GitHub Pages; no runtime CDN or build step is required. Copy Markdown falls back
+to browser copy when clipboard access fails, then selects the raw text for
+manual copying if automatic copy is unavailable.
+
+### Frontend regression tests
+
+Run `npm ci`, `npx playwright install chromium`, then `npm test`. Tests serve local
+files through browser request interception and mock the Worker/CDN endpoints;
+they do not publish journal entries or upload real media. Coverage includes
+successive pasted images, sizing, Markdown/HTML safety, and clipboard fallbacks.
+
+To update the bundled preview libraries, update their npm dependencies and copy
+`node_modules/marked/lib/marked.umd.js`, `node_modules/dompurify/dist/purify.min.js`,
+and their licenses into `vendor/`, then rerun the tests.
